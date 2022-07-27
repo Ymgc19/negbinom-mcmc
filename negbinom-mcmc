@@ -1,3 +1,8 @@
+#負の二項分布のマルコフ連鎖モンテカルロ法メトロポリス・ヘイスティング法のコードです．
+#感染症の二次感染のパラメータ推定などに利用できるかなって思いました．
+#observedのリストの数値や長さを変えても動くように設計した気がします．
+#ただ，失敗回数が1回固定なので，そこには注意してほしいです．
+
 from itertools import product
 import numpy as np
 import matplotlib.pyplot as plt
