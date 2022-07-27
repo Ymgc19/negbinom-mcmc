@@ -1,0 +1,64 @@
+from itertools import product
+import numpy as np
+import matplotlib.pyplot as plt
+from statistics import mean, stdev, variance
+
+#二次感染者数を簡略化したもの．
+observed = [25 , 5 , 2 , 0 , 0 , 0 , 1]
+
+#提案される乱数kのリストを先に作っておく．
+propose_k= []
+#ステップ数
+steps = 100000
+#小数第2位までの乱数を生成し，リストに追加する．
+for a in range(steps):
+    k = round(np.random.uniform(0 , 1) , 2)
+    propose_k.append(k)
+
+
+#kの関数を定義．負の二項分布のパラメータがkのとき，実現値が生起する確率を算出．
+def f(k):
+    for b in range(len(observed)):
+        #失敗確率のb乗と成功確率の積をとっていく．その都度リストに数値を追加していく．
+        prob_b = (1-k)**(b)*k**observed[b]
+        prob_list = []
+        prob_list.append(prob_b)
+        #リストの要素の総積をとり，それをパラメータkの下での生起確率とする．
+        prob_k = np.product(prob_list)
+    #リストの中身を全部削除する．リセットして次に備える．
+    prob_list.clear()
+    return round(prob_k , 2)
+
+
+
+#パラメータkのためのリストを作成．初期値を入れておく．0.9にしておく．理由はない．
+para_k = [0.9]
+#MCMCの過程で選択されたパラメータkの下での実現値生起確率のリストを作成．初期値はf(0.9)．
+prob_MCMC = [0.03815204244769461]
+
+#MCMC M-H
+for c in range(len(propose_k)):
+    odds = f(propose_k[c]) / prob_MCMC[c-1]
+    #オッズが1より大きいか小さいかで条件分岐
+    #オッズが1よりも大きいときは提案されたパラメータの方がふさわしいという意味
+    if odds > 1:
+        para_k.append(propose_k[c])
+        prob_MCMC.append(f(propose_k[c]))
+    else:
+        rand = np.random.uniform(0,1)
+        #乱数を発生させて，新しいパラメータを採択するかどうかを判定する．
+        if odds > rand:
+            para_k.append(propose_k[c])
+            prob_MCMC.append(f(propose_k[c]))
+        else:
+            para_k.append(para_k[c])
+            prob_MCMC.append(prob_MCMC[c-1])
+
+#平均値を求め，描画
+
+fig = plt.figure()
+ax1 = fig.add_subplot(1,2,2)
+ax1.hist(para_k , bins = 90)
+ax2 = fig.add_subplot(1,2,1)
+ax2.plot(para_k, lw = 0.05)
+plt.show()
